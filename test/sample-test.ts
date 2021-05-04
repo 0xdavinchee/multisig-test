@@ -261,3 +261,87 @@ describe("MultiSigWallet Execute Transaction Tests", function () {
       .withArgs(owner0.address, 0);
   });
 });
+
+describe("MultiSigWallet Revoke Confirmation Tests", function () {
+  let multiSigWallet: MultiSigWallet;
+  let multiSigWalletFactory: MultiSigWalletFactory;
+  let owner0: SignerWithAddress;
+  let owner1: SignerWithAddress;
+  let owner2: SignerWithAddress;
+  let nonOwner0: SignerWithAddress;
+
+  before(async () => {
+    [owner0, owner1, owner2, nonOwner0] = await ethers.getSigners();
+    multiSigWalletFactory = (await ethers.getContractFactory(
+      "MultiSigWallet",
+      owner0
+    )) as MultiSigWalletFactory;
+  });
+
+  beforeEach(async () => {
+    multiSigWallet = (await multiSigWalletFactory.deploy(
+      [owner0.address, owner1.address, owner2.address],
+      2
+    )) as MultiSigWallet;
+    await multiSigWallet.deployed();
+  });
+
+  it("Revoke Confirmation should not work if sent by non-owner", async () => {
+    await multiSigWallet.submitTransaction(nonOwner0.address, 10, []);
+    await expect(
+      multiSigWallet.connect(nonOwner0).revokeConfirmation(0)
+    ).to.be.revertedWith("not owner");
+  });
+
+  it("Revoke Confirmation should not work if txn doesn't exist", async () => {
+    await expect(
+      multiSigWallet.connect(owner0).revokeConfirmation(0)
+    ).to.be.revertedWith("tx does not exist");
+  });
+
+  it("Revoke Confirmation should not work if txn already executed", async () => {
+    await multiSigWallet.submitTransaction(nonOwner0.address, 0, []);
+
+    await multiSigWallet.connect(owner0).confirmTransaction(0);
+    await multiSigWallet.connect(owner1).confirmTransaction(0);
+
+    await multiSigWallet.executeTransaction(0);
+
+    await expect(multiSigWallet.revokeConfirmation(0)).to.be.revertedWith(
+      "tx already executed"
+    );
+  });
+
+  it("Revoke Confirmation should not work if the message sender hasn't already confirmed the txn", async () => {
+    await multiSigWallet.submitTransaction(nonOwner0.address, 10, []);
+
+    await multiSigWallet.connect(owner0).confirmTransaction(0);
+
+    await expect(
+      multiSigWallet.connect(owner1).revokeConfirmation(0)
+    ).to.be.revertedWith("tx not confirmed");
+  });
+
+  it("Revoke Confirmation should successfully remove confirmation, not allowing execution of txn", async () => {
+    await multiSigWallet.submitTransaction(nonOwner0.address, 10, []);
+
+    await multiSigWallet.connect(owner0).confirmTransaction(0);
+    await multiSigWallet.connect(owner1).confirmTransaction(0);
+
+    await multiSigWallet.connect(owner1).revokeConfirmation(0);
+
+    await expect(multiSigWallet.executeTransaction(0)).to.be.revertedWith(
+      "cannot execute tx"
+    );
+  });
+
+  it("Revoke Confirmation should emit the correct event and args", async () => {
+    await multiSigWallet.submitTransaction(nonOwner0.address, 0, []);
+
+    await multiSigWallet.connect(owner0).confirmTransaction(0);
+
+    await expect(multiSigWallet.revokeConfirmation(0))
+      .to.emit(multiSigWallet, "RevokeConfirmation")
+      .withArgs(owner0.address, 0);
+  });
+});
