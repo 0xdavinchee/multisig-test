@@ -20,6 +20,11 @@ task("accounts", "Prints the list of accounts", async (_args, hre) => {
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
-const config: HardhatUserConfig = { solidity: "0.7.6" };
+const config: HardhatUserConfig = {
+  solidity: "0.7.6",
+  gasReporter: {
+    currency: "USD",
+  },
+};
 
 export default config;
