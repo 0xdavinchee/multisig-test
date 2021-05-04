@@ -10,7 +10,7 @@ jobs:
         uses: actions/setup-node@v1
 
       - name: Install dependencies
-        uses: npm install
+        run: npm install
 
       - name: Build contracts
         run: npx hardhat compile
