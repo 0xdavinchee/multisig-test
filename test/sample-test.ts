@@ -345,3 +345,47 @@ describe("MultiSigWallet Revoke Confirmation Tests", function () {
       .withArgs(owner0.address, 0);
   });
 });
+
+describe("MultiSigWallet Misc Function Tests", function () {
+  let multiSigWallet: MultiSigWallet;
+  let multiSigWalletFactory: MultiSigWalletFactory;
+  let owner0: SignerWithAddress;
+  let owner1: SignerWithAddress;
+  let owner2: SignerWithAddress;
+  let nonOwner0: SignerWithAddress;
+
+  before(async () => {
+    [owner0, owner1, owner2, nonOwner0] = await ethers.getSigners();
+    multiSigWalletFactory = (await ethers.getContractFactory(
+      "MultiSigWallet",
+      owner0
+    )) as MultiSigWalletFactory;
+  });
+
+  beforeEach(async () => {
+    multiSigWallet = (await multiSigWalletFactory.deploy(
+      [owner0.address, owner1.address, owner2.address],
+      2
+    )) as MultiSigWallet;
+    await multiSigWallet.deployed();
+  });
+
+  it("getOwners should return correct owners", async () => {
+    expect(await multiSigWallet.getOwners()).to.eql([owner0.address, owner1.address, owner2.address]);
+  });
+  
+  it("getTransactionCount should return 0 prior to creation", async () => {
+    expect(await (await multiSigWallet.getTransactionCount()).toNumber()).to.eql(0);
+  });
+
+  it("getTransactionCount should return 1 after creating 1 txn", async () => {
+    await multiSigWallet.submitTransaction(owner0.address, 0, []);
+    expect((await multiSigWallet.getTransactionCount()).toNumber()).to.eq(1);
+  });
+
+  it("getTransaction should return newly created object", async () => {
+    const txn = await multiSigWallet.submitTransaction(owner1.address, 0, []);
+    const getTxn = await multiSigWallet.getTransaction(0)
+    expect((await multiSigWallet.getTransaction(0)).value.toNumber()).to.eql(txn.value.toNumber());
+  });
+});
