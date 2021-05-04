@@ -1,4 +1,7 @@
 # multisig wallet testing
+
+[![codecov](https://codecov.io/gh/0xdavinchee/multisig-test/branch/main/graph/badge.svg?token=R2EP9QHGRC)](https://codecov.io/gh/0xdavinchee/multisig-test)
+
 We will use the Multi-Sig Wallet contract from solidity by example: https://solidity-by-example.org/app/multi-sig-wallet/
 
 Feel free to choose a different contract of your own creation or one that you like from the solidity by example website.

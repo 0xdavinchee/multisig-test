@@ -1,0 +1,24 @@
+name: multisigwallet-coverage
+on: push
+jobs: 
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install node
+        uses: actions/setup-node@v1
+
+      - name: Install dependencies
+        uses: npm install
+
+      - name: Build contracts
+        run: npx hardhat compile
+
+      - name: Run coverage
+        run: npx hardhat coverage
+
+      - name: Upload report
+        run: bash <(curl -s https://codecov.io/bash)
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
